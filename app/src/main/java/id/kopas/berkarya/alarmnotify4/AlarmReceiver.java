@@ -26,6 +26,9 @@ public class AlarmReceiver extends WakefulBroadcastReceiver implements Constants
         String notifDay = intent.getStringExtra(EXTRA_NOTIF_DAY);
         long notifTime = intent.getLongExtra(EXTRA_NOTIF_TIME, -1);
 
+        Log.d("AlarmReceiver","onReceive.day:"+String.valueOf(System.currentTimeMillis())+"/"+String.valueOf(notifTime));
+
+        //jika time tidak sama dengan -1 dan time tidak lebih dari lime menit maka bernilai true
         boolean timePassed = (notifTime != -1 && Math.abs(System.currentTimeMillis() - notifTime) > FIVE_MINUTES);
 
 
@@ -67,19 +70,19 @@ public class AlarmReceiver extends WakefulBroadcastReceiver implements Constants
 
         //Database time schedule
         ArrayList<Task> notifSchedules = new ArrayList<>();
-        notifSchedules.add(new Task(1,"21:05","Judul Notifikasi 1","Keterangan Isi"));
-        notifSchedules.add(new Task(1,"21:07","Judul Notifikasi 2","Keterangan Isi"));
-        notifSchedules.add(new Task(1,"21:10","Judul Notifikasi 3","Keterangan Isi"));
+        notifSchedules.add(new Task("3","23:22","Judul Notifikasi 1","Keterangan Isi"));
+        notifSchedules.add(new Task("3","23:23","Judul Notifikasi 3","Keterangan Isi"));
+        notifSchedules.add(new Task("4","00:01","Judul Notifikasi 2","Keterangan Isi"));
 
 
         //String notifNames[] = {"20:35","20:37","20:39","20:42"};
 
-        int dayOfNotifFound = 0;
         boolean nextAlarmFound = false;
+        String dayOfNotifFound = null;
         String nameOfNotifFound = null;
         String descOfNotifFound = null;
         for (Task notif : notifSchedules) {
-            then = getCalendarFromPrayerTime(then, notif.getTime());
+            then = getCalendarFromPrayerTime(then, notif.getDay(), notif.getTime());
 
             if (then.after(now)) {
                 // this is the alarm to set
@@ -94,7 +97,7 @@ public class AlarmReceiver extends WakefulBroadcastReceiver implements Constants
 
         if (!nextAlarmFound) {
             for (Task notif : notifSchedules) {
-                then = getCalendarFromPrayerTime(then, notif.getTime());
+                then = getCalendarFromPrayerTime(then, notif.getDay(), notif.getTime());
 
                 if (then.before(now)) {
                     // this is the next day.
@@ -114,9 +117,9 @@ public class AlarmReceiver extends WakefulBroadcastReceiver implements Constants
 
 
         intent.putExtra(EXTRA_NOTIF_NAME, nameOfNotifFound);
-        intent.putExtra(EXTRA_NOTIF_TIME, then.getTimeInMillis());
         intent.putExtra(EXTRA_NOTIF_DESC, descOfNotifFound);
         intent.putExtra(EXTRA_NOTIF_DAY, dayOfNotifFound);
+        intent.putExtra(EXTRA_NOTIF_TIME, then.getTimeInMillis());
 
         alarmIntent = PendingIntent.getBroadcast(context, ALARM_ID, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
@@ -167,8 +170,9 @@ public class AlarmReceiver extends WakefulBroadcastReceiver implements Constants
     }
 
 
-    private Calendar getCalendarFromPrayerTime(Calendar cal, String nameTime) {
+    private Calendar getCalendarFromPrayerTime(Calendar cal, String day, String nameTime) {
         String[] time = nameTime.split(":");
+        cal.set(Calendar.DAY_OF_WEEK, Integer.valueOf(day));
         cal.set(Calendar.HOUR_OF_DAY, Integer.valueOf(time[0]));
         cal.set(Calendar.MINUTE, Integer.valueOf(time[1]));
         cal.set(Calendar.SECOND, 0);
